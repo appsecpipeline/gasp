@@ -55,22 +55,23 @@ type Event interface {
 
 // Struct for event arguments
 type EventArgs struct {
-	Required    []string // names of required fields will be in this slice of strings
-	Profile     string   // Required - named pipeline from master.yaml, appsec.pipeline or [app name]-pipeline.yaml
-	Dir         string   // default to empty string - local directory to copy to Docke shared volume
-	DryRun      bool     // default = false - Do this pipeline run without launching actual dockers, etc
-	Clean       bool     // default = false - Remove the containers and volumes once completed
-	Vol         string   // default = "" - Specify the name of the results volumne to use
-	AppName     string   // default = "" - Name of the app being tested
-	EventType   string   // default = "Command-line" - Type of event that caused the pipeline run
-	AppProfile  string   // default = "" - App specific pipeline profile to run sent in [app-name]-pipeline.yaml
-	AppToolProf string   // default = "" - App specific tool profile to use during pipeline run from [app-name]-tool.yaml
-	Target      string   // default = "" - Docker name of the target for the pipeline run - to be launched before run
-	PipeType    string   // Required - {"static", "dynamic"}
-	Loc         string   // default = "" - Location of source code for static test runs
-	DojoHost    string   // Required - host name of the Dojo instance to push the run restults to
-	DojoApiKey  string   // Required - API key to talk to Dojo's REST API
-	DojoProdId  string   // Required - The Product ID from Dojo to submit the results for this test run
+	Required    []string          // names of required fields will be in this slice of strings
+	Profile     string            // Required - named pipeline from master.yaml, appsec.pipeline or [app name]-pipeline.yaml
+	Dir         string            // default to empty string - local directory to copy to Docke shared volume
+	DryRun      bool              // default = false - Do this pipeline run without launching actual dockers, etc
+	Clean       bool              // default = false - Remove the containers and volumes once completed
+	Vol         string            // default = "" - Specify the name of the results volumne to use
+	AppName     string            // default = "" - Name of the app being tested
+	EventType   string            // default = "Command-line" - Type of event that caused the pipeline run
+	AppProfile  string            // default = "" - App specific pipeline profile to run sent in [app-name]-pipeline.yaml
+	AppToolProf string            // default = "" - App specific tool profile to use during pipeline run from [app-name]-tool.yaml
+	Target      string            // default = "" - Docker name of the target for the pipeline run - to be launched before run
+	PipeType    string            // Required - {"static", "dynamic"}
+	Loc         string            // default = "" - Location of source code for static test runs
+	ToolConf    map[string]string // Required - Parameters needed to run each tool in the named pipeline
+	DojoHost    string            // Required - host name of the Dojo instance to push the run restults to
+	DojoApiKey  string            // Required - API key to talk to Dojo's REST API
+	DojoProdId  string            // Required - The Product ID from Dojo to submit the results for this test run
 	//DojoNewEng boot // default = true - Create a new engagement for each pipeline run?
 }
 
