@@ -2,6 +2,7 @@
 package gasp
 
 import (
+	"bufio"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -67,18 +68,26 @@ type EventArgs struct {
 	AppToolProf string            // default = "none" - The custom tool profile to override the default tool profile as defined in [app-name]-tool.yaml
 	Loc         string            // default = "/opt/appsecpipeline/source" - Path to where the sourcecode is on the container
 	ParamsRaw   string            // default = "" - Required parametetrs for the pipeline tools in this run
-	ToolConf    map[string]string // calculated - map["name of tool":"string that contains parameters for tool] e.g. ["bandit":"LOC=/opt/appsecpipeline/source"]
+	ToolConf    map[string]string // calculated - map["name of tool":"string that contains parameters for tool]
+	//                               e.g. ["bandit":"LOC=/opt/appsecpipeline/source"]
 }
 
 // Sturct for master.yaml aka main configuration
 type M struct {
-	Version string              `yaml:"version"`
-	Global  Gconf               `yaml:"global"`
-	Prof    map[string]Profiles `yaml:"profiles"`
+	Version    string              `yaml:"version"`
+	Global     Gconf               `yaml:"global"`
+	Prof       map[string]Profiles `yaml:"profiles"`
+	Deployment Deploy              `yaml:"deployment"`
 }
 
 type Gconf struct {
-	MinSev string `yaml:"min-severity"`
+	MinSev      string `yaml:"min-severity"`
+	MaxToolRun  int    `yaml:"max-tool-run"`
+	MaxParallel int    `yaml:"max-parallel"`
+	MaxDynamic  int    `yaml:"max-dynamic"`
+	MaxCrital   int    `yaml:"max-critical"`
+	MaxHigh     int    `yaml:"max-high"`
+	MaxMedium   int    `yaml:"max-medium"`
 }
 
 type Profiles struct {
@@ -89,20 +98,28 @@ type Profiles struct {
 }
 
 type Tools struct {
-	Tool    string `yaml:"tool"`
-	Options string `yaml:"options"`
+	Tool        string `yaml:"tool"`
+	ToolProfile string `yaml:"tool-profile"`
+	MinSev      string `yaml:"min-severity"`
+	OnFailure   string `yaml:"on-failure"`
+}
+
+type Deploy struct {
+	Master  string `yaml:"master"`
+	Devel   string `yaml:"sast"`
+	Preprod string `yaml:"pre-prod"`
 }
 
 // Struct for secpipeline-config.yaml aka tools configuration
 type S struct {
-	Version string             `yaml:"version"`
-	T       map[string]SecTool `yaml:"tools"`
+	T map[string]SecTool `yaml:"tools"`
 }
 
 type SecTool struct {
 	Version       string            `yaml:"version"`
+	ToolVer       string            `yaml:"tool-version"`
 	Tags          []string          `yaml:"tags"`
-	TType         string            `yaml:"type"`
+	ToolType      string            `yaml:"type"`
 	ScanType      string            `yaml:"scan_type"`
 	IconSm        string            `yaml:"icon-sm"`
 	IconLg        string            `yaml:"icon-lg"`
@@ -200,15 +217,23 @@ func (l *LocalConfigs) ReadSecPipe(sec *S, c ConfigOpts) {
 
 	fpath := path.Join(c.Path, l.ToolFile)
 
-	f, err := ioutil.ReadFile(fpath)
+	f, err := os.Open(fpath)
 	if err != nil {
 		fmt.Println("Problem reading secpipeline-conf.yaml from ", fpath)
 		fmt.Printf("Error is: %s", err)
 	}
 
-	err = yaml.Unmarshal(f, sec)
+	// Massage secpipeline-conf.yaml to account for yaml library not liking its format
+	contents := "tools:\n"
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		line := "  " + scanner.Text()
+		contents = contents + line + "\n"
+	}
+
+	err = yaml.Unmarshal([]byte(contents), sec)
 	if err != nil {
-		fmt.Println("error: %v", err)
+		fmt.Println("Error parsing secpipeline-conf.yaml: %v", err)
 	}
 }
 
